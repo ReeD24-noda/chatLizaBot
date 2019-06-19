@@ -37,12 +37,12 @@ var serv = mongoose.model('vikis', Schema), // база данных по игр
   message = mongoose.model('msgs', Schema2), // база сообщений бота для общения в чате
   options = mongoose.model('opts', Schema3); // не работает в данный момент, раньше перекидывал сообщения на уровень выше
 
-var level;
+var level, bot;
 
 options.find({}, (err, res) => level = res[0].level);
 
 function connect(){
-bot = new TelegramBot(MyToken, {
+  bot = new TelegramBot(MyToken, {
    polling: true
   });
 }

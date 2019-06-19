@@ -30,7 +30,7 @@ const TelegramBot = require('node-telegram-bot-api'),
     level: "number"
   });
 
-mongoose.connect("mongodb://213.251.236.61/builds");
+mongoose.connect("mongodb://0.0.0.0/builds");
 
 var serv = mongoose.model('vikis', Schema), // база данных по игре мегаполис
   podxod = mongoose.model('shtabs', Schema1), // информация по подходам (прокачка штаба)

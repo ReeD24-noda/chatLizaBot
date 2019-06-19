@@ -2,10 +2,8 @@ const MyToken = "539519220:AAGXpj4X3JblDLCBpOplxqbNq9lh746W_rs";
 
 // "git add . & git commit -m 'first commit' & git push -u origin master"; 
 
-
 const TelegramBot = require('node-telegram-bot-api'),
   exec = require('child_process').exec,
-  fs = require("fs"),
   Agent = require('socks5-https-client/lib/Agent'),
   mongoose = require('mongoose'),
   Schema = new mongoose.Schema({
@@ -32,12 +30,12 @@ const TelegramBot = require('node-telegram-bot-api'),
     level: "number"
   });
 
-
-var timer = {}, spam = {}, spamFlag = false, bot;
-
 mongoose.connect("mongodb://localhost/builds");
 
-var serv = mongoose.model('vikis', Schema), podxod = mongoose.model('shtabs', Schema1), message = mongoose.model('msgs', Schema2), options = mongoose.model('opts', Schema3);
+var serv = mongoose.model('vikis', Schema), // база данных по игре мегаполис
+  podxod = mongoose.model('shtabs', Schema1), // информация по подходам (прокачка штаба)
+  message = mongoose.model('msgs', Schema2), // база сообщений бота для общения в чате
+  options = mongoose.model('opts', Schema3); // не работает в данный момент, раньше перекидывал сообщения на уровень выше
 
 var level;
 
@@ -46,10 +44,6 @@ options.find({}, (err, res) => level = res[0].level);
 function connect(){
 bot = new TelegramBot(MyToken, {
    polling: true,
-   // polling: true,
-   // request: {
-    // proxy: "http://localhost:8080"
-   // }
    request: {
       agentClass: Agent,
       agentOptions: {
@@ -68,19 +62,6 @@ bot.on("polling_error", function(err){
 
 var check = "";
 
-setInterval(() => {
-  check = "";
-  bot.getMe()
-  .then(function(data){
-    check = data.id;
-    // console.log(check);
-    if(check == ""){
-      // connect();
-      process.exit();
-    }
-  });
-}, 2000);
-
 async function tableCreate(id){
   var rs = "";
   await podxod.find().sort({"score": -1}).then(function(res){
@@ -93,24 +74,6 @@ async function tableCreate(id){
   });
   await bot.sendMessage(id, rs);
 }
-
-async function sendPhoto(){
-  let rand = Math.ceil(Math.random() * 100), i = 0, intr;
-  console.log(rand);
-  // intr = setInterval(async () => {
-    console.log(i);
-    // if(i == rand){
-      // clearInterval(intr);
-      var name = "t_"+new Date().getTime()+".png";
-      exec("scrot "+name);
-      await bot.sendMessage('-1001187220601', "/screenshot 👀");
-      await bot.sendPhoto('-1001187220601', "http://icqtwo.ddns.net/bot_teleg/"+name);
-      await fs.unlink("./"+name);
-    // }
-    // i++;
-  // }, 1000);
-}
-// sendPhoto();
 
 bot.onText(/\/resetScore/, function(msg, match){
   bot.getChatMember(msg.chat.id, msg.from.id).then(async (res) => {
@@ -127,12 +90,6 @@ bot.onText(/\/resetScore/, function(msg, match){
       await bot.sendMessage(msg.chat.id, "Ты не админ!");
     }
   });
-});
-bot.onText(/\/screenshot/, async function(msg, match){
-  var inter, name = "t_"+new Date().getTime()+".png";
-  exec("scrot "+name);
-  await bot.sendPhoto(msg.chat.id, "http://icqtwo.ddns.net/bot_teleg/"+name);
-  await fs.unlink(name);
 });
 bot.onText(/\/privateScore/, function(msg, match){
   bot.getChatMember(msg.chat.id, msg.from.id).then(async (res) => {
@@ -160,27 +117,12 @@ bot.onText(/\/privateScore/, function(msg, match){
   });
 });
 
-var rs = "", name = "", pr = "", otstyp = 0, texProcent = 0, gifProcent = 0, stickProcentP = 0, stickProcentM = 0;
-
-// var time = process.argv[2];
-var messDel = [], messSend = [];
-
-if(process.argv[2] != undefined){
-  // console.log(process.argv[2]);
-  messSend = process.argv[2].split("==").join(" ").split("++");
-}
-
-var iter;
-
-var variant = ["", "Редиска 1 заход сделает когда огурец с помидором на горе свистнут", "Опять вместо  нормального овоща у нас эта противная редиска", "Без труда редиске дуло в танках не прочистят никогда", "Одна редиска хорошо, а без нее еще лучше 🌚"];
-
-
-var clients = {
-  404751290: ["редис", "андрей", "Андрей", "редиска"], 
-  205827200: ["абрикос", "Илья", "илья", "илюха"], 
-  191625379: ["помидор", "Миха", "миха", "Михаил", "михаил", "помидорчик", "помидорище", "помидоры", "томат", "черри"],
-  280245508: ["огурец", "огурцы", "Дима", "дима", "димон", "огурчик", "димка", "огуречик", "зелёный", "зелень"]
-};
+var rs = "", name = "", pr = "", otstyp = 0, texProcent = 0, gifProcent = 0, stickProcentP = 0, stickProcentM = 0, messDel = [], messSend = [], iter, clients = {
+    404751290: ["редис", "андрей", "Андрей", "редиска"], 
+    205827200: ["абрикос", "Илья", "илья", "илюха"], 
+    191625379: ["помидор", "Миха", "миха", "Михаил", "михаил", "помидорчик", "помидорище", "помидоры", "томат", "черри"],
+    280245508: ["огурец", "огурцы", "Дима", "дима", "димон", "огурчик", "димка", "огуречик", "зелёный", "зелень"]
+  };
 
 async function setBd(file){
   await message.find({msg: file}, function(err, res){
@@ -271,7 +213,6 @@ bot.on("message", async (msg) => {
       }
       await message.find({msg: forw}, async function(err, res){
         if(res.length == 0 && forw.match(/[aZ-zA]/) == null && forw.length > 1){
-          // console.log("добавлено");
           await message.collection.insert({msg: forw, koll: level + 1});
         }
       });
@@ -286,8 +227,7 @@ bot.on("message", async (msg) => {
     case "false true false": gifProcent = -20; stickProcentP = -20; stickProcentM = -20; texProcent = -20; break;
     case "false false true": stickProcentP = 2; stickProcentM = -20; texProcent = -20; gifProcent = 2; break;
   }
-  // console.log(texProcent, gifProcent, stickProcentP, stickProcentM);
-
+ 
   if(messSend.length == 0){
     if(v1 > 0){
       await message.find({}, async function(err, res){
@@ -311,25 +251,19 @@ bot.on("message", async (msg) => {
             } else{
               msgUser = msgUser.join("");
             }
-            // console.log(regs);
             var msgOnce = new RegExp(msg.text.trim().match(/[aZ-zA-аЯ-яАё]+[.,+!@#$%^&*?(){}\[\]]{0}/g), "i");
-            console.log(msgOnce, msgUser);
             var iskom = res.filter((w) => {return ((w.msg+"").match(new RegExp(msgUser, "i"))) != null});
-            // console.log(iskom);
             if(smile == false){
               prov = iskom.filter((w) => {return ((w.msg+"").match(msgOnce) == null && (w.msg+"").length == txt.length)});
             } else{
               prov = iskom.filter((w) => {return (w.msg != txt)});
             }
-            console.log(prov.length, iskom.length);
             if(prov.length != 0){
               prov = prov.filter((w) => {return w.msg.match(/msgSticker|msgGifs/g) == null});
               var rand = Math.ceil(Math.random() * prov.length);
               var type = Math.ceil(Math.random() * 100), typeSendMess = Math.ceil(Math.random() * 2);
-              // type = 4;
               if(setScore == false){ 
                 var coll = res[rand-1].koll + 1, sendM = false;
-                // message.collection.update({msg: prov[rand-1].msg}, {$set: {koll: coll}});
                 
                  if(type <= (80 + texProcent) && sendM == false){
                   sendM = true;
@@ -364,7 +298,6 @@ bot.on("message", async (msg) => {
               var rand = Math.ceil(Math.random() * len);
               var type = Math.ceil(Math.random() * 100), typeSendMess = Math.ceil(Math.random() * 2);
               if(setScore == false && randMes <= 100){
-                // var coll = res[rand-1].koll + 1;
                var coll = res[rand-1].koll + 1, sendM = false;
                 
                 if(type <= (80 + texProcent) && sendM == false){
@@ -400,8 +333,6 @@ bot.on("message", async (msg) => {
                 if(type == 1 || type == 2){
                   res = res.filter((w) => {return ((w.msg+"").match(/msgSticker|msgGifs/g) == null)});
                 }
-                // message.collection.update({msg: res[rand-1].msg}, {$set: {koll: coll}});
-                
               }
             }
           }
@@ -411,7 +342,6 @@ bot.on("message", async (msg) => {
               var rand = Math.ceil(Math.random() * len);
               var type = Math.ceil(Math.random() * 100), typeSendMess = Math.ceil(Math.random() * 2);
               if(setScore == false && randMes <= 100){
-                // var coll = res[rand-1].koll + 1;
                var coll = res[rand-1].koll + 1, sendM = false;
                 
                 if(type <= (80 + texProcent) && sendM == false){
@@ -446,19 +376,7 @@ bot.on("message", async (msg) => {
               }
             }
           }
-        } else{
-          if(res.length != 1){
-            level = level + 1;
-            // options.collection.update({level: (level-1)}, {$set: {level: level}});
-            message.find({koll: level}, (err, res) => {
-              bot.sendMessage(msg.chat.id, "Ебать копать, вы добили все мои фразы, начинается новый этап, я вас прикончу 😈😈😈😈"+" \n В моём арсенале теперь "+ res.length+" сообщений \n Тебе: @randomize_one, @R_ee_D20, @The_negative_one, @XJIe6yLLIek пизда, я вас в порошок сотрю, все фрукты и овощи затрахаю 🤗🤗");
-            });
-          } else{
-            if(res.length == 1){
-              message.collection.update({koll: level}, {$set: {koll: (level+1)}});
-            }
-          }
-        }
+        } 
       });
     } else if(v1 == -1){
       if((msg.chat.id+"") == "-1001187220601"){
@@ -495,7 +413,6 @@ bot.on("message", async (msg) => {
                 options.collection.update({level: level}, {$set: {level: level+1}});
               }
             });
-          // )
         }
       }
     }
@@ -547,14 +464,3 @@ bot.onText(/\/newBuild/, (msg, match) => {
     }
   });
 }); 
-
-setTimeout(async function(){
-  var t = "";
-  if(messSend.length > 0){
-    t = messSend.join("++");
-  }
-  console.log("=="+t);
-  await process.exit();
-}, 90000);
-
-

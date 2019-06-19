@@ -43,22 +43,10 @@ options.find({}, (err, res) => level = res[0].level);
 
 function connect(){
 bot = new TelegramBot(MyToken, {
-   polling: true,
-   request: {
-      agentClass: Agent,
-      agentOptions: {
-        socksHost: 'socksy.seriyps.ru',
-        socksPort: 7777,
-        socksUsername: 'tg-r_ee_d20',
-        socksPassword: 'Le1xPsCa'
-       }
-    } 
+   polling: true
   });
 }
 connect();
-bot.on("polling_error", function(err){
-  console.log(err);
-});
 
 var check = "";
 
